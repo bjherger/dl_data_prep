@@ -22,9 +22,19 @@ dependencies:
 - !!python/unicode
   'zlib=1.2.8=3'
 - pip:
+  - backports.weakref==1.0.post1
+  - bleach==1.5.0
+  - enum34==1.1.6
+  - funcsigs==1.0.2
+  - futures==3.2.0
+  - html5lib==0.9999999
   - keras==2.1.2
+  - markdown==2.6.10
+  - mock==2.0.0
   - numpy==1.13.3
   - pandas==0.21.0
+  - pbr==3.1.1
+  - protobuf==3.5.0.post1
   - python-dateutil==2.6.1
   - pytz==2017.3
   - pyyaml==3.12
@@ -32,4 +42,7 @@ dependencies:
   - scipy==1.0.0
   - six==1.11.0
   - sklearn-pandas==1.6.0
+  - tensorflow==1.4.1
+  - tensorflow-tensorboard==0.4.0rc3
+  - werkzeug==0.13
 prefix: !!python/unicode '/Users/bjherger/anaconda2/envs/data_prep'
