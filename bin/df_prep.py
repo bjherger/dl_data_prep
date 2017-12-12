@@ -64,7 +64,7 @@ def create_mapper(df, cat_vars, cont_vars, date_vars):
     mapper.transform(df)
 
     return mapper
-i
+
 
 def create_model_layers(df, mapper, cat_vars, cont_vars, date_vars, response_var):
 
@@ -103,7 +103,7 @@ def create_model_layers(df, mapper, cat_vars, cont_vars, date_vars, response_var
             embedding_input_length = 1
         embedding_input_dim = int(max(transformed)) + 1
         embedding_output_dim = int(min((embedding_input_dim + 1) / 2, 50))
-        logging.info('Creating embedding for cat_var: {}, withembedding_input_length: {}, embedding_input_dim: {}, '
+        logging.info('Creating embedding for cat_var: {}, with embedding_input_length: {}, embedding_input_dim: {}, '
                      'embedding_output_dim: {}'.format(cat_var, embedding_input_length, embedding_input_dim,
                                                        embedding_output_dim))
 
