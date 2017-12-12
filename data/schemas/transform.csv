@@ -1,1 +1,7 @@
-variable,variable,type,data_set
+variable,data_set,type,variable
+air_store_id,observations,object,
+visit_datetime,observations,datetime64[ns],
+reserve_datetime,observations,datetime64[ns],
+reserve_visitors,observations,int64,
+visit_date,observations,object,
+visitors,observations,int64,

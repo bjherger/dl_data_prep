@@ -7,7 +7,12 @@ import numpy
 import pandas
 import yaml
 
+from keras import backend as K
+
 # Global variables
+from keras import losses
+from keras.losses import mean_squared_logarithmic_error
+
 CONFS = None
 BATCH_NAME = None
 TEMP_DIR = None
@@ -130,3 +135,7 @@ def archive_dataset_schemas(step_name, local_dict, global_dict):
 
     # Write to file
     agg_schema_df.to_csv(schema_output_path, index_label='variable')
+
+
+def root_mean_squared_log_error(y_true, y_prod):
+    return K.sqrt(mean_squared_logarithmic_error(y_true, y_prod))
