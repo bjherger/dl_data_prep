@@ -2,14 +2,19 @@ import logging
 
 import keras
 import numpy
+import pandas
+import sys
 from keras.layers import Embedding, Flatten, Concatenate, Dense
 from sklearn.preprocessing import Imputer, StandardScaler, LabelEncoder
 from sklearn_pandas import DataFrameMapper
 
 
-def create_mapper(df, cat_vars, cont_vars, mapper=None):
+def create_mapper(df, cat_vars, cont_vars, date_vars):
 
     # TODO Add support for datetime variables
+
+    # Reference variables
+    transformation_list = list()
 
     # Copy df, to avoid 'inplace' transformation
     df = df.copy(deep=True)
@@ -25,37 +30,53 @@ def create_mapper(df, cat_vars, cont_vars, mapper=None):
     for cont_var in cont_vars:
         df[cont_var] = df[cont_var].astype(numpy.float32)
 
-    # If no mapper provided, create, populate and train mapper,
-    if mapper is None:
-        transformation_list = list()
+    for date_var in date_vars:
+        date_cat_vars = ['dayofweek', 'dayofyear', 'daysinmonth', 'days_in_month', 'quarter']
+        date_cont_vars = ['is_leap_year', 'is_month_end', 'is_month_start', 'is_quarter_end', 'is_quarter_start',
+                           'is_year_end', 'is_year_start']
 
-        # Add continuous variable transformations for cont_vars
-        for cont_var in cont_vars:
-            transformations = [Imputer(strategy='mean'), StandardScaler()]
-            var_tuple = ([cont_var], transformations)
-            transformation_list.append(var_tuple)
+        for date_new_var in date_cat_vars:
+            local_var = '_'.join([date_var, date_new_var])
+            df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
+            cat_vars.append(local_var)
 
-        # Add categorical variable transformations for cat_vars
-        for cat_var in cat_vars:
+        for date_new_var in date_cont_vars:
+            local_var = '_'.join([date_var, date_new_var])
+            df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
+            cont_vars.append(local_var)
 
-            # TODO Replace LabelEncoder with CategoricalEncoder, to better handle unseen cases
-            transformations = [LabelEncoder()]
-            var_tuple = (cat_var, transformations)
-            transformation_list.append(var_tuple)
+        # Convert to epoch
+        epoch_var = date_var + '_epoch'
+        df[epoch_var] = df[date_var].astype(numpy.int64) // 10 ** 9
+        cont_vars.append(epoch_var)
 
-        # Create mapper
-        mapper = DataFrameMapper(features=transformation_list, df_out=True)
+    # Add continuous variable transformations for cont_vars
+    for cont_var in cont_vars:
+        transformations = [Imputer(strategy='mean'), StandardScaler()]
+        var_tuple = ([cont_var], transformations)
+        transformation_list.append(var_tuple)
 
-        # Train mapper
-        mapper.fit(df)
+    # Add categorical variable transformations for cat_vars
+    for cat_var in cat_vars:
 
-        # Throw away transformation, to set up mapper
-        mapper.transform(df)
+        # TODO Replace LabelEncoder with CategoricalEncoder, to better handle unseen cases
+        transformations = [LabelEncoder()]
+        var_tuple = (cat_var, transformations)
+        transformation_list.append(var_tuple)
+
+    # Create mapper
+    mapper = DataFrameMapper(features=transformation_list, df_out=True)
+
+    # Train mapper
+    mapper.fit(df)
+
+    # Throw away transformation, to set up mapper
+    mapper.transform(df)
 
     return mapper
 
 
-def create_model_layers(df, cat_vars, cont_vars, response_var, mapper):
+def create_model_layers(df, mapper, cat_vars, cont_vars, date_vars, response_var):
 
     # Reference variables
     Xs = list()
@@ -63,6 +84,28 @@ def create_model_layers(df, cat_vars, cont_vars, response_var, mapper):
     x_inputs = list()
     x_layers = list()
 
+    # Create datetime related variables
+    for date_var in date_vars:
+        date_cat_vars = ['dayofweek', 'dayofyear', 'daysinmonth', 'days_in_month', 'quarter']
+        date_cont_vars = ['is_leap_year', 'is_month_end', 'is_month_start', 'is_quarter_end', 'is_quarter_start',
+                           'is_year_end', 'is_year_start']
+
+        for date_new_var in date_cat_vars:
+            local_var = '_'.join([date_var, date_new_var])
+            df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
+            cat_vars.append(local_var)
+
+        for date_new_var in date_cont_vars:
+            local_var = '_'.join([date_var, date_new_var])
+            df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
+            cont_vars.append(local_var)
+
+        # Convert to epoch
+        epoch_var = date_var+'_epoch'
+        df[epoch_var] = df[date_var].astype(numpy.int64) // 10 ** 9
+        cont_vars.append(epoch_var)
+
+    # Transform variables w/ mapper
     mapper_transformed = mapper.transform(df)
 
     # Create X inputs for categorical variables
