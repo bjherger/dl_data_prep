@@ -3,13 +3,14 @@ import logging
 import keras
 import numpy
 import pandas
-import sys
 from keras.layers import Embedding, Flatten, Concatenate, Dense
 from sklearn.preprocessing import Imputer, StandardScaler, LabelEncoder
 from sklearn_pandas import DataFrameMapper
 
 
 def create_mapper(df, cat_vars, cont_vars, date_vars):
+
+    logging.info('Creating mapper')
 
     # TODO Add support for datetime variables
 
@@ -31,6 +32,7 @@ def create_mapper(df, cat_vars, cont_vars, date_vars):
         df[cont_var] = df[cont_var].astype(numpy.float32)
 
     for date_var in date_vars:
+        logging.info('Enriching for datetime var: {}'.format(date_var))
         df, date_cat_vars, date_cont_vars = add_datetime_vars(df, date_var)
         cat_vars.extend(date_cat_vars)
         cont_vars.extend(date_cont_vars)
@@ -50,16 +52,19 @@ def create_mapper(df, cat_vars, cont_vars, date_vars):
         transformation_list.append(var_tuple)
 
     # Create mapper
+    logging.info('Creating mapper')
     mapper = DataFrameMapper(features=transformation_list, df_out=True)
 
     # Train mapper
+    logging.info('Training newly created mapper')
     mapper.fit(df)
 
     # Throw away transformation, to set up mapper
+    logging.info('Transforming data set with newly created mapper, to initialize mapper internals')
     mapper.transform(df)
 
     return mapper
-
+i
 
 def create_model_layers(df, mapper, cat_vars, cont_vars, date_vars, response_var):
 
@@ -181,12 +186,15 @@ def add_datetime_vars(df, date_var):
                       'is_year_end', 'is_year_start']
 
     for date_new_var in date_cat_vars:
+
         local_var = '_'.join([date_var, date_new_var])
+        logging.debug('Creating datetime sub var: {}'.format(local_var))
         df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
         cat_vars.append(local_var)
 
     for date_new_var in date_cont_vars:
         local_var = '_'.join([date_var, date_new_var])
+        logging.debug('Creating datetime sub var: {}'.format(local_var))
         df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
         cont_vars.append(local_var)
 

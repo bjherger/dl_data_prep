@@ -36,7 +36,7 @@ def extract():
     visits = pandas.read_csv('../data/input/air_visit_data.csv')
 
     observations = pandas.merge(reservations, visits)
-    observations = observations.head(10000)
+    # observations = observations.head(10000)
     lib.archive_dataset_schemas('extract', locals(), globals())
     logging.info('End extract')
     return observations
