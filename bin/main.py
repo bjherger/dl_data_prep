@@ -36,7 +36,7 @@ def extract():
     visits = pandas.read_csv('../data/input/air_visit_data.csv')
 
     observations = pandas.merge(reservations, visits)
-    observations = observations.head(1000)
+    observations = observations.head(10000)
     lib.archive_dataset_schemas('extract', locals(), globals())
     logging.info('End extract')
     return observations
@@ -45,7 +45,7 @@ def extract():
 def transform(observations):
     logging.info('Begin transform')
 
-    cat_vars = ['air_store_id']
+    cat_vars = []
     cont_vars = ['reserve_visitors', 'visitors']
     date_vars = ['visit_datetime', 'reserve_datetime']
 
@@ -64,7 +64,7 @@ def transform(observations):
 def model(observations, mapper):
     logging.info('Begin model')
 
-    cat_vars = ['air_store_id']
+    cat_vars = []
     cont_vars = ['reserve_visitors']
     date_vars = ['visit_datetime', 'reserve_datetime']
     response_var = 'visitors'
@@ -78,10 +78,10 @@ def model(observations, mapper):
 
     regression_model = Model(x_inputs, preds)
     opt = optimizers.Adam()
-    regression_model.compile(loss='mean_squared_error',
+    regression_model.compile(loss=lib.root_mean_squared_log_error,
                              optimizer=opt)
 
-    regression_model.fit(Xs, y, batch_size=2 ** 12)
+    regression_model.fit(Xs, y, batch_size=2 ** 12, validation_split=.2)
 
     lib.archive_dataset_schemas('model', locals(), globals())
     logging.info('End model')

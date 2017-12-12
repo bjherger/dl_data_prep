@@ -103,12 +103,13 @@ def create_model_layers(df, mapper, cat_vars, cont_vars, date_vars, response_var
                                                        embedding_output_dim))
 
         # Create input and embedding layer
-        sequence_input = keras.Input(shape=(embedding_input_length,), dtype='int32')
+        sequence_input = keras.Input(shape=(embedding_input_length,), dtype='int32', name=cat_var+'_input')
 
         embedding_layer = Embedding(input_dim=embedding_input_dim,
                                     output_dim=embedding_output_dim,
                                     input_length=embedding_input_length,
-                                    trainable=True)
+                                    trainable=True,
+                                    name=cat_var + '_embedding')
 
         embedded_sequences = embedding_layer(sequence_input)
         x = Flatten()(embedded_sequences)
@@ -140,7 +141,7 @@ def create_model_layers(df, mapper, cat_vars, cont_vars, date_vars, response_var
             embedding_input_length = 1
 
         # Create input layer
-        sequence_input = keras.Input(shape=(embedding_input_length,), dtype='int32')
+        sequence_input = keras.Input(shape=(embedding_input_length,), dtype='int32', name=cont_var+'_input')
 
         # Add input to inputs
         x_inputs.append(sequence_input)
