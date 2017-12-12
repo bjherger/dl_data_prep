@@ -36,8 +36,7 @@ def extract():
     visits = pandas.read_csv('../data/input/air_visit_data.csv')
 
     observations = pandas.merge(reservations, visits)
-    observations = observations.head(2000)
-
+    observations = observations.head(1000)
     lib.archive_dataset_schemas('extract', locals(), globals())
     logging.info('End extract')
     return observations
@@ -48,10 +47,11 @@ def transform(observations):
 
     cat_vars = ['air_store_id']
     cont_vars = ['reserve_visitors', 'visitors']
-    date_vars = ['visit_datetime', 'reserve_datetime', 'visit_date']
+    date_vars = ['visit_datetime', 'reserve_datetime']
 
     # Convert datetime vars
     for date_var in date_vars:
+        logging.info('Converting date_var: {}'.format(date_var))
         observations[date_var] = pandas.to_datetime(observations[date_var], format='%Y-%m-%d %H:%M:%S')
 
     mapper = df_prep.create_mapper(observations, cat_vars=cat_vars, cont_vars=cont_vars, date_vars=date_vars)
@@ -66,7 +66,7 @@ def model(observations, mapper):
 
     cat_vars = ['air_store_id']
     cont_vars = ['reserve_visitors']
-    date_vars = ['visit_datetime', 'reserve_datetime', 'visit_date']
+    date_vars = ['visit_datetime', 'reserve_datetime']
     response_var = 'visitors'
 
     Xs, y, x_inputs, input_nub, output_nub = df_prep.create_model_layers(observations, mapper, cat_vars, cont_vars,

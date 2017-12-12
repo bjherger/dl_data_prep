@@ -31,24 +31,9 @@ def create_mapper(df, cat_vars, cont_vars, date_vars):
         df[cont_var] = df[cont_var].astype(numpy.float32)
 
     for date_var in date_vars:
-        date_cat_vars = ['dayofweek', 'dayofyear', 'daysinmonth', 'days_in_month', 'quarter']
-        date_cont_vars = ['is_leap_year', 'is_month_end', 'is_month_start', 'is_quarter_end', 'is_quarter_start',
-                           'is_year_end', 'is_year_start']
-
-        for date_new_var in date_cat_vars:
-            local_var = '_'.join([date_var, date_new_var])
-            df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
-            cat_vars.append(local_var)
-
-        for date_new_var in date_cont_vars:
-            local_var = '_'.join([date_var, date_new_var])
-            df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
-            cont_vars.append(local_var)
-
-        # Convert to epoch
-        epoch_var = date_var + '_epoch'
-        df[epoch_var] = df[date_var].astype(numpy.int64) // 10 ** 9
-        cont_vars.append(epoch_var)
+        df, date_cat_vars, date_cont_vars = add_datetime_vars(df, date_var)
+        cat_vars.extend(date_cat_vars)
+        cont_vars.extend(date_cont_vars)
 
     # Add continuous variable transformations for cont_vars
     for cont_var in cont_vars:
@@ -84,26 +69,10 @@ def create_model_layers(df, mapper, cat_vars, cont_vars, date_vars, response_var
     x_inputs = list()
     x_layers = list()
 
-    # Create datetime related variables
     for date_var in date_vars:
-        date_cat_vars = ['dayofweek', 'dayofyear', 'daysinmonth', 'days_in_month', 'quarter']
-        date_cont_vars = ['is_leap_year', 'is_month_end', 'is_month_start', 'is_quarter_end', 'is_quarter_start',
-                           'is_year_end', 'is_year_start']
-
-        for date_new_var in date_cat_vars:
-            local_var = '_'.join([date_var, date_new_var])
-            df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
-            cat_vars.append(local_var)
-
-        for date_new_var in date_cont_vars:
-            local_var = '_'.join([date_var, date_new_var])
-            df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
-            cont_vars.append(local_var)
-
-        # Convert to epoch
-        epoch_var = date_var+'_epoch'
-        df[epoch_var] = df[date_var].astype(numpy.int64) // 10 ** 9
-        cont_vars.append(epoch_var)
+        df, date_cat_vars, date_cont_vars = add_datetime_vars(df, date_var)
+        cat_vars.extend(date_cat_vars)
+        cont_vars.extend(date_cont_vars)
 
     # Transform variables w/ mapper
     mapper_transformed = mapper.transform(df)
@@ -143,7 +112,6 @@ def create_model_layers(df, mapper, cat_vars, cont_vars, date_vars, response_var
 
         embedded_sequences = embedding_layer(sequence_input)
         x = Flatten()(embedded_sequences)
-
 
         # Add input to inputs
         x_inputs.append(sequence_input)
@@ -198,3 +166,31 @@ def create_model_layers(df, mapper, cat_vars, cont_vars, date_vars, response_var
         y = None
         output_nub = None
     return Xs, y, x_inputs, input_nub, output_nub
+
+
+def add_datetime_vars(df, date_var):
+    cat_vars = list()
+    cont_vars = list()
+
+    # Create datetime related variables
+
+    df[date_var] = pandas.to_datetime(df[date_var])
+    date_cat_vars = ['dayofweek', 'dayofyear', 'daysinmonth', 'days_in_month', 'quarter']
+    date_cont_vars = ['is_leap_year', 'is_month_end', 'is_month_start', 'is_quarter_end', 'is_quarter_start',
+                      'is_year_end', 'is_year_start']
+
+    for date_new_var in date_cat_vars:
+        local_var = '_'.join([date_var, date_new_var])
+        df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
+        cat_vars.append(local_var)
+
+    for date_new_var in date_cont_vars:
+        local_var = '_'.join([date_var, date_new_var])
+        df[local_var] = df[date_var].apply(lambda x: getattr(x, date_new_var, None))
+        cont_vars.append(local_var)
+
+    # Convert to epoch
+    epoch_var = date_var + '_epoch'
+    df[epoch_var] = df[date_var].astype(numpy.int64) // 10 ** 9
+    cont_vars.append(epoch_var)
+    return df, cat_vars, cont_vars
