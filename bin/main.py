@@ -84,6 +84,8 @@ def model(observations, mapper):
 
     regression_model.fit(Xs, y, batch_size=2 ** 12, validation_split=.2)
 
+    regression_model.save('..data/models/regression.csv')
+
     lib.archive_dataset_schemas('model', locals(), globals())
     logging.info('End model')
     pass
