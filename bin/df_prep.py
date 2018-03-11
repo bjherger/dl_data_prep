@@ -8,7 +8,7 @@ from sklearn.preprocessing import Imputer, StandardScaler, LabelEncoder
 from sklearn_pandas import DataFrameMapper
 
 
-def create_mapper(df, cat_vars, cont_vars, date_vars):
+def create_mapper(df, cat_vars=list(), cont_vars=list(), date_vars=list(), no_transform_vars=list()):
 
     logging.info('Creating mapper')
 
@@ -49,6 +49,11 @@ def create_mapper(df, cat_vars, cont_vars, date_vars):
         # TODO Replace LabelEncoder with CategoricalEncoder, to better handle unseen cases
         transformations = [LabelEncoder()]
         var_tuple = (cat_var, transformations)
+        transformation_list.append(var_tuple)
+
+    for no_transform_var in no_transform_vars:
+        transformations = []
+        var_tuple = (no_transform_var, transformations)
         transformation_list.append(var_tuple)
 
     # Create mapper
