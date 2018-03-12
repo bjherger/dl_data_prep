@@ -9,7 +9,6 @@ from sklearn_pandas import DataFrameMapper
 
 
 def create_mapper(df, cat_vars=list(), cont_vars=list(), date_vars=list(), no_transform_vars=list()):
-
     logging.info('Creating mapper')
 
     # TODO Add support for datetime variables
@@ -29,6 +28,7 @@ def create_mapper(df, cat_vars=list(), cont_vars=list(), date_vars=list(), no_tr
 
     # Convert continuous variables to float32
     for cont_var in cont_vars:
+        logging.debug('Converting cont_var data type: {}'.format(cont_var))
         df[cont_var] = df[cont_var].astype(numpy.float32)
 
     for date_var in date_vars:
@@ -39,21 +39,23 @@ def create_mapper(df, cat_vars=list(), cont_vars=list(), date_vars=list(), no_tr
 
     # Add continuous variable transformations for cont_vars
     for cont_var in cont_vars:
+        logging.debug('Creating transformation list for cont_var: {}'.format(cont_var))
         transformations = [Imputer(strategy='mean'), StandardScaler()]
         var_tuple = ([cont_var], transformations)
         transformation_list.append(var_tuple)
 
     # Add categorical variable transformations for cat_vars
     for cat_var in cat_vars:
-
+        logging.debug('Creating transformation list for cat_var: {}'.format(cat_var))
         # TODO Replace LabelEncoder with CategoricalEncoder, to better handle unseen cases
         transformations = [LabelEncoder()]
         var_tuple = (cat_var, transformations)
         transformation_list.append(var_tuple)
 
     for no_transform_var in no_transform_vars:
-        transformations = []
-        var_tuple = (no_transform_var, transformations)
+        logging.debug('Creating transformation list for cont_var: {}'.format(no_transform_var))
+        transformations = [Imputer(strategy='most_frequent')]
+        var_tuple = ([no_transform_var], transformations)
         transformation_list.append(var_tuple)
 
     # Create mapper
